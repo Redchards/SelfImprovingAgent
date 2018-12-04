@@ -4,6 +4,7 @@ from renderable import Renderable
 
 class EmptyEntity:
     type = 'empty'
+    symbol = '#'
 
     def __init__(self):
         self.id = -1
@@ -15,6 +16,7 @@ class EmptyEntity:
 
 class EnemyAgent(EmptyEntity):
     type = 'enemy'
+    symbol = 'E'
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
@@ -23,6 +25,7 @@ class EnemyAgent(EmptyEntity):
 
 class Obstacle(EmptyEntity):
     type = 'obstacle'
+    symbol = 'O'
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
@@ -31,6 +34,7 @@ class Obstacle(EmptyEntity):
 
 class Food(EmptyEntity):
     type = 'food'
+    symbol = 'F'
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
@@ -39,6 +43,7 @@ class Food(EmptyEntity):
 
 class PlayerAgent(EmptyEntity):
     type = 'player'
+    symbol = 'I'
 
     def __init__(self, entity_id):
         self.entity_id = entity_id

@@ -37,11 +37,6 @@ class PlayerController:
 
         pos_x, pos_y = self.player_position
 
-        if self.map[pos_y][pos_x].type == 'obstacle':
-            self.player_position = (old_x, old_y)
-            self.collided = True
-            return
-
         if self.player_position[0] < 0:
             self.player_position = (0, pos_y)
 
@@ -53,4 +48,11 @@ class PlayerController:
 
         elif self.player_position[1] >= self.dim[1]:
             self.player_position = (pos_x, self.dim[1] - 1)
+
+        pos_x, pos_y = self.player_position
+
+        if self.map[pos_y][pos_x].type == 'obstacle':
+            self.player_position = (old_x, old_y)
+            self.collided = True
+            return
 

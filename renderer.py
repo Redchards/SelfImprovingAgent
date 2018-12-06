@@ -25,9 +25,9 @@ class Renderer:
         self.draw_sensors = [False for _ in self.simulator.sensor_list]
 
         keypress_handlers = {
-            pygame.K_1: lambda: self.set_render_sensors(not self.draw_sensors[0], 0),
-            pygame.K_2: lambda: self.set_render_sensors(not self.draw_sensors[1], 1),
-            pygame.K_3: lambda: self.set_render_sensors(not self.draw_sensors[2], 2),
+            pygame.K_F1: lambda: self.set_render_sensors(not self.draw_sensors[0], 0),
+            pygame.K_F2: lambda: self.set_render_sensors(not self.draw_sensors[1], 1),
+            pygame.K_F3: lambda: self.set_render_sensors(not self.draw_sensors[2], 2),
             pygame.K_ESCAPE: lambda: self.stop()
         }
         event_handlers = {
@@ -104,4 +104,5 @@ class Renderer:
         self.screen = pygame.display.set_mode(self.window_dimensions, HWSURFACE | DOUBLEBUF | RESIZABLE)
 
     def set_render_sensors(self, val, idx):
+        print("hai")
         self.draw_sensors[idx] = val

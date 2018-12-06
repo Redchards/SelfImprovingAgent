@@ -24,12 +24,12 @@ class Sensor:
                     #print(y_pos + cell_y, x_pos + cell_x)
                     #print(dim)
                     if map[y_pos + cell_y][x_pos + cell_x].type == self.sensor_type:
-                        perception_result.append(True)
+                        perception_result.append(1)
                         activated = True
                         #tmp.append(offset)
                         break
                 if not activated:
-                    perception_result.append(False)
+                    perception_result.append(0)
 
         #print(perception_result)
         #print(tmp)

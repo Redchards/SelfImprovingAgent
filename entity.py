@@ -8,7 +8,7 @@ class EmptyEntity:
 
     def __init__(self):
         self.id = -1
-        self.renderable = Renderable(pygame.image.load('resources/empty.png'))
+        self.renderable = Renderable(pygame.image.load('resources/image/empty.png'))
 
     def get_visual(self):
         return self.renderable.get_visual()
@@ -20,7 +20,7 @@ class EnemyAgent(EmptyEntity):
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
-        self.renderable = Renderable(pygame.image.load('resources/enemy.jpg'))
+        self.renderable = Renderable(pygame.image.load('resources/image/Deerclops.png'))
 
 
 class Obstacle(EmptyEntity):
@@ -29,7 +29,7 @@ class Obstacle(EmptyEntity):
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
-        self.renderable = Renderable(pygame.image.load('resources/obstacle.png'))
+        self.renderable = Renderable(pygame.image.load('resources/image/obstacle.png'))
 
 
 class Food(EmptyEntity):
@@ -38,7 +38,7 @@ class Food(EmptyEntity):
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
-        self.renderable = Renderable(pygame.image.load('resources/food.png'))
+        self.renderable = Renderable(pygame.image.load('resources/image/food.png'))
 
 
 class PlayerAgent(EmptyEntity):
@@ -47,4 +47,4 @@ class PlayerAgent(EmptyEntity):
 
     def __init__(self, entity_id):
         self.entity_id = entity_id
-        self.renderable = Renderable(pygame.image.load('resources/player.jpg'))
+        self.renderable = Renderable(pygame.image.load('resources/image/Wilba.png'))

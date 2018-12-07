@@ -27,7 +27,7 @@ class MockSimulator(DefaultSimulator):
     def __init__(self):
         img = pygame.image.load("resources/star.png")
         # self.mockentity = entity.PlayerAgent(42)
-        self.map = MapLoader().parse_map('resources/map_test.csv')
+        self.map = MapLoader().parse_map('resources/map/map_test.csv')
         self.dim = (len(self.map[0]), len(self.map))
         self.player_controller = PlayerController(self.map)
         self.player_state = PlayerState(speed=1, max_health=40, quantized_level_num=16,

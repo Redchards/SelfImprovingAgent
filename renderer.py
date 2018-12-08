@@ -11,6 +11,7 @@ from pygame.locals import *
 from simulator import DefaultSimulator
 from color import DefaultColorManager
 from event_handler import EventHandler
+import entity
 
 class Renderer:
     def __init__(self, window_dimensions=(480, 480), window_name="Default Renderer", simulator=DefaultSimulator(), cell_margin=1):
@@ -23,6 +24,7 @@ class Renderer:
         self.color_manager = DefaultColorManager()
         self.cell_dim = self.compute_cell_dimensions()
         self.draw_sensors = [False for _ in self.simulator.sensor_list]
+        self.default_empty = entity.EmptyEntity()
 
         keypress_handlers = {
             pygame.K_F1: lambda: self.set_render_sensors(not self.draw_sensors[0], 0),
@@ -78,8 +80,12 @@ class Renderer:
 
         for row in range(nb_row):
             for col in range(nb_col):
-                self.screen.blit(pygame.transform.scale(grid[row][col].get_visual(), (cell_width - self.cell_margin, cell_height - self.cell_margin)),
+                self.screen.blit(pygame.transform.scale(self.default_empty.get_visual(), (cell_width - self.cell_margin, cell_height - self.cell_margin)),
                                  (cell_width * col + self.cell_margin, cell_height * row + self.cell_margin))
+                if not grid[row][col].type == 'empty':
+                    s = pygame.Surface((cell_width - self.cell_margin, cell_height - self.cell_margin), pygame.SRCALPHA)
+                    s.blit(pygame.transform.scale(grid[row][col].get_visual(), (cell_width - self.cell_margin, cell_height - self.cell_margin)), (0, 0))
+                    self.screen.blit(s, (cell_width * col + self.cell_margin, cell_height * row + self.cell_margin))
 
         player_pos_x, player_pos_y = self.simulator.player_controller.player_position
         for i, sensor in enumerate(self.simulator.sensor_list):

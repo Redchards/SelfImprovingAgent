@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Dec  6 14:30:36 2018
-
-@author: astricot
-"""
 
 import numpy as np
 import copy
@@ -44,15 +39,16 @@ def get_features(sensors,energy,history):
 
 
 
-episode_count = 100
-lr = 1e-5
-nin = 145
-nout = 1
-layers = [30]
+if __name__ == "__main__":
+    episode_count = 100
+    lr = 1e-5
+    nin = 145
+    nout = 1
+    layers = [30]
 
-model = NN(nin,nout,layers)
-optimizer = optim.Adam(model.parameters(), lr=lr)
-criterion = nn.LinLoss()
+    model = NN(nin,nout,layers)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    criterion = nn.LinLoss()
 
 #for i in range(episode_count):
 #    while True:

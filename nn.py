@@ -7,36 +7,50 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
 class NN(nn.Module):
-    def __init__(self, inSize, outSize, layers=[]): # in:145, out:1 - 4 times
+    def __init__(self, inSize, outSize, layers=[]):  # in:145, out:1 - 4 times
         super(NN, self).__init__()
         self.layers = nn.ModuleList([])
         for x in layers:
             self.layers.append(nn.Linear(inSize, x))
+            self.layers[-1].bias.data.fill_(0)
             inSize = x
         self.layers.append(nn.Linear(inSize, outSize))
+        self.layers[-1].bias.data.fill_(0)
+
     def forward(self, x):
         x = self.layers[0](x)
         for i in range(1, len(self.layers)):
             x = torch.nn.functional.leaky_relu(x)
             x = self.layers[i](x)
-            x = 2/(1+torch.exp(-x)) - 1
+            x = 2 / (1 + torch.exp(-x)) - 1
         return x
-    
+
+
 class LinLoss(nn.Module):
-    def forward(self,y,y_hat,action):
+    def __init__(self):
+        super(LinLoss, self).__init__()
+
+    def forward(self, y_hat, y, action):
         res = torch.zeros(4)
-        res[action] = y - y_hat[action]        
-        return res
-    
-def get_features(sensors,energy,history):
+        res[action] = y - y_hat[action]
+        return torch.sum(res)
+
+    '''def forward(self, y_hat, y, action):
+        res = torch.zeros(4)
+        res[action] = y - y_hat[action]
+        return res'''
+
+def get_features(sensors, energy, history):
     li = []
     for i in range(4):
-        sen = np.hstack(((np.roll(x, i * (len(x) // 4)) for x in sensors)))
-        sen = np.hstack((sen,np.array(energy),np.array(history)))
+        t = tuple(np.roll(x, i * (len(x) // 4)) for x in sensors)
+        #sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
+        sen = np.hstack(t)
+        sen = np.hstack((sen, np.array(energy), np.array(history)))
         li.append(sen)
     return torch.from_numpy(np.array(li)).type(torch.FloatTensor)
-
 
 
 if __name__ == "__main__":
@@ -46,11 +60,11 @@ if __name__ == "__main__":
     nout = 1
     layers = [30]
 
-    model = NN(nin,nout,layers)
+    model = NN(nin, nout, layers)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.LinLoss()
 
-#for i in range(episode_count):
+# for i in range(episode_count):
 #    while True:
 #        
 #        ################################
@@ -68,8 +82,5 @@ if __name__ == "__main__":
 #            rsum=0
 #            break
 #
-#print("done")
-#env.close()
-    
-    
-        
+# print("done")
+# env.close()

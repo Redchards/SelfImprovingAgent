@@ -18,18 +18,14 @@ class EnemyBehaviour:
         self.current_step += 1
 
         if self.current_step >= 60 / self.speed:
-            print(player_state.position)
             for i in range(len(self.enemy_positions)):
                 pos = self.enemy_positions[i]
                 r = random.choice(2, p=[0.2, 0.8])
                 if r == 0:
-                    print('(0, 0)')
                     continue
                 m = self.choices[random.choice(len(self.choices), p=self.evaluate_policy_probability(pos, player_state.position))]
 
-                print("move " , m)
                 self.enemy_positions[i] = (pos[0] + m[0], pos[1] + m[1])
-                print(m)
 
             self.current_step = 0
 
@@ -62,8 +58,6 @@ class EnemyBehaviour:
                 t_dist = 9 - dist / 2
 
             print("resulting pos {}".format(resulting_pos))
-            print(dist, angle, t_dist, w_angle)
             probas.append(np.exp(0.33 * w_angle * t_dist))
-        print(probas)
 
         return [p / sum(probas) for p in probas] if sum(probas) > 0 else [1/4, 1/4, 1/4, 1/4]

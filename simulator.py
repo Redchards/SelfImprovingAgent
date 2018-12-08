@@ -27,11 +27,6 @@ class MockSimulator(DefaultSimulator):
     def __init__(self):
         img = pygame.image.load("resources/image/star.png")
         # self.mockentity = entity.PlayerAgent(42)
-        self.map = MapLoader().parse_map('resources/map/map0.csv')
-        self.dim = (len(self.map[0]), len(self.map))
-        self.player_controller = PlayerController(self.map)
-        self.player_state = PlayerState(speed=1, max_health=40, quantized_level_num=16,
-                                        position=self.player_controller.player_position)
         food_sensor_map = {
             'O': [(-4, 0), (-6, 0), (4, 0), (6, 0), (-2, -2), (-4, -2), (2, -2), (4, -2), (0, -4), (-2, -4), (2, -4),
                   (0, -6), (-2, 2), (-4, 2), (2, 2), (4, 2), (0, 4), (-2, 4), (2, 4), (0, 6)],
@@ -65,56 +60,88 @@ class MockSimulator(DefaultSimulator):
             'O': [(0, 0)]
         }
 
-        self.sensor_list = [Sensor('food', food_sensor_map, food_sensor_aoe),\
-                            Sensor('enemy', enemy_sensor_map, enemy_sensor_aoe),\
+        self.sensor_list = [Sensor('food', food_sensor_map, food_sensor_aoe), \
+                            Sensor('enemy', enemy_sensor_map, enemy_sensor_aoe), \
                             Sensor('obstacle', obstacle_sensor_map, obstacle_sensor_aoe)]
-        self.enemy_behaviour = EnemyBehaviour(self.map)
 
-    def step(self, evt_queue):
+        self.reset()
+
+    def step(self, player_command_idx, player_command, evt_queue):
+        if not self.player_state.alive:
+            self.reset()
+
+        reward = self.apply_enemy_logic()
+
+        if self.player_state.alive:
+            reward = self.apply_player_logic(player_command, evt_queue)
+
+        self.last_action = player_command_idx
+
+        if not self.player_state.alive:
+            reward = -0.9
+
+        return self.get_state() + (reward,)
+
+    def get_state(self):
+         return self.map, tuple(s.current_perception for s in self.sensor_list), \
+               self.player_state.get_health_level_one_hot(), \
+               [1 if i == self.last_action else 0 for i in range(4)] + [int(self.player_controller.collided)]
+
+    def apply_enemy_logic(self):
+        reward = 0
         old_enemy_positions = list(self.enemy_behaviour.enemy_positions)
         new_enemy_positions = self.enemy_behaviour.step(self.player_state)
 
         for old_pos, new_pos in zip(old_enemy_positions, new_enemy_positions):
-            print(new_pos)
-            print(self.map[new_pos[1]][new_pos[0]].type)
             if not old_pos == new_pos:  # TODO : maybe enemies should be able to step on food ?
                 self.map[new_pos[1]][new_pos[0]] = self.map[old_pos[1]][old_pos[0]]
                 self.map[old_pos[1]][old_pos[0]] = entity.EmptyEntity()
                 if new_pos == self.player_controller.player_position:
+                    reward = -0.9
                     self.player_state.take_damage(self.player_state.current_health)
                     self.player_state.alive = False
 
-        if not self.player_state.alive:
-            return self.map
+        return reward
 
+    def apply_player_logic(self, player_command, evt_queue):
+        reward = 0
         old_player_pos = self.player_controller.player_position
 
-        self.player_controller.step(evt_queue)
+        self.player_controller.step(player_command, evt_queue)
 
         new_player_pos = self.player_controller.player_position
 
         if not new_player_pos == old_player_pos:
             if self.map[new_player_pos[1]][new_player_pos[0]].type == 'food':
+                reward = 0.6
                 self.player_state.heal(15)
 
             if self.map[new_player_pos[1]][new_player_pos[0]].type == 'enemy':
                 self.player_state.take_damage(self.player_state.current_health)
+                reward = -0.9
                 self.player_state.alive = False
                 self.map[old_player_pos[1]][
                     old_player_pos[0]] = entity.EmptyEntity()  # TODO : replace by entity dead player ?
-                return self.map
-
-            self.map[new_player_pos[1]][new_player_pos[0]] = self.map[old_player_pos[1]][old_player_pos[0]]
-            self.map[old_player_pos[1]][old_player_pos[0]] = entity.EmptyEntity()
-            self.player_state.position = new_player_pos
-            self.player_state.take_damage(1)
-            print(self.map[old_player_pos[1]][old_player_pos[0]])
-            print(self.map[new_player_pos[1]][new_player_pos[0]])
+            else:
+                self.map[new_player_pos[1]][new_player_pos[0]] = self.map[old_player_pos[1]][old_player_pos[0]]
+                self.map[old_player_pos[1]][old_player_pos[0]] = entity.EmptyEntity()
+                self.player_state.position = new_player_pos
+                self.player_state.take_damage(1)
 
         for sensor in self.sensor_list:
             sensor.perception(new_player_pos, self.map)
 
-        return self.map
+        return reward
+
+    def reset(self):
+        self.map = MapLoader().parse_map('resources/map/map1.csv')
+        self.dim = (len(self.map[0]), len(self.map))
+        self.player_controller = PlayerController(self.map)
+        self.player_state = PlayerState(speed=1, max_health=40, quantized_level_num=16,
+                                        position=self.player_controller.player_position)
+
+        self.enemy_behaviour = EnemyBehaviour(self.map)
+        self.last_action = -1
 
 
 class Simulator(DefaultSimulator):

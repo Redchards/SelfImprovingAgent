@@ -6,7 +6,7 @@ class Sensor:
         self.sensor_type = sensor_type
         self.sensor_map = sensor_map
         self.sensor_aoe = sensor_aoe
-        self.current_perception = None
+        self.current_perception = [0 for _, x in self.sensor_map.items() for _ in x]
 
     def perception(self, player_position, map):
         dim = (len(map[0]), len(map))

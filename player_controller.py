@@ -7,34 +7,39 @@ class PlayerController:
         self.player_position = next((j, i) for i, _ in enumerate(map) for j, e in enumerate(map[i]) if e.type == 'player')
         self.dim = (len(map[0]), len(map))
 
+        self.keymap = {
+            'up': [pygame.K_UP, pygame.K_z],
+            'right': [pygame.K_RIGHT, pygame.K_d],
+            'down': [pygame.K_DOWN, pygame.K_s],
+            'left': [pygame.K_LEFT, pygame.K_q],
+            'manual_control': [pygame.K_m]
+        }
+
         event_handlers = {
-            pygame.KEYDOWN: lambda evt: self.move(evt)
+            pygame.KEYDOWN: lambda evt: self.set_manual_control(not self.manual_control) if evt.key in self.keymap['manual_control'] else self.move((0, 0), evt)
         }
 
         self.handler = EventHandler(event_handlers)
         self.collided = False
-        print(self.player_position)
+        self.manual_control = False
 
 
-    def step(self, evt_queue):
+    def step(self, player_command, evt_queue):
         self.handler.handle_events(evt_queue)
+        self.move(player_command, evt_queue)
 
-    def move(self, evt):
+    def set_manual_control(self, value):
+        self.manual_control = value
+
+    def move(self, player_command, evt):
         self.collided = False
         old_x, old_y = self.player_position
 
-        if evt.key == pygame.K_UP:
-            self.player_position = (old_x, old_y - 1)
-
-        elif evt.key == pygame.K_DOWN:
-            self.player_position = (old_x, old_y + 1)
-
-        elif evt.key == pygame.K_LEFT:
-            self.player_position = (old_x - 1, old_y)
-
-        elif evt.key == pygame.K_RIGHT:
-            self.player_position = (old_x + 1, old_y)
-
+        if not self.manual_control:
+            move = player_command
+            self.player_position = (old_x + move[0], old_y + move[1])
+        else:
+            self.handle_manual_command(self, evt)
         pos_x, pos_y = self.player_position
 
         if self.player_position[0] < 0:
@@ -55,4 +60,18 @@ class PlayerController:
             self.player_position = (old_x, old_y)
             self.collided = True
             return
+
+    def handle_manual_command(self, evt):
+        old_x, old_y = self.player_position
+
+        if evt.key == pygame.K_UP:
+            self.player_position = (old_x, old_y - 1)
+        elif evt.key == pygame.K_DOWN:
+            self.player_position = (old_x, old_y + 1)
+
+        elif evt.key == pygame.K_LEFT:
+            self.player_position = (old_x - 1, old_y)
+
+        elif evt.key == pygame.K_RIGHT:
+            self.player_position = (old_x + 1, old_y)
 

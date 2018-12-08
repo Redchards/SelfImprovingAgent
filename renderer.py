@@ -12,12 +12,15 @@ from simulator import DefaultSimulator
 from color import DefaultColorManager
 from event_handler import EventHandler
 import entity
+import strategy
 
 class Renderer:
-    def __init__(self, window_dimensions=(480, 480), window_name="Default Renderer", simulator=DefaultSimulator(), cell_margin=1):
+    def __init__(self, window_dimensions=(480, 480), window_name="Default Renderer", simulator=DefaultSimulator(), player_strategy=strategy.QCONStrategy(), cell_margin=1):
+        self.cell_margin = cell_margin
         self.window_dimensions = window_dimensions
         self.window_name = window_name
         self.simulator = simulator
+        self.player_strategy = player_strategy
         self.cell_margin = 1
         self.running = False
         self.screen = None
@@ -46,12 +49,16 @@ class Renderer:
         pygame.display.set_caption(self.window_name)
         
         clock = pygame.time.Clock()
-        
+
+        m, s, e, h = self.simulator.get_state()
         while self.running:
             evt_queue = pygame.event.get()
             self.handler.handle_events(evt_queue)
+            player_command_idx, player_command = self.player_strategy.select_move(s, e, h)
+            m, s, e, h, r = self.simulator.step(player_command_idx, player_command, evt_queue)
+            self.player_strategy.update_strategy(s, e, h, r)
 
-            self.draw_grid(self.simulator.step(evt_queue), self.cell_dim)
+            self.draw_grid(m, self.cell_dim)
             clock.tick(60)
             pygame.display.flip()
 

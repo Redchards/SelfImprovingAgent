@@ -32,3 +32,6 @@ class PlayerState:
         elif self.current_health_level < 0:
             self.current_health_level = 0
             self.alive = False
+
+    def get_health_level_one_hot(self):
+        return [1 if i == self.current_health_level else 0 for i in range(self.quantized_level_num)]

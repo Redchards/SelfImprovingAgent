@@ -46,6 +46,7 @@ def get_features(sensors, energy, history):
     li = []
     for i in range(4):
         t = tuple(np.roll(x, i * (len(x) // 4)) for x in sensors)
+        print(t)
         #sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
         sen = np.hstack(t)
         sen = np.hstack((sen, np.array(energy), np.array(history)))
@@ -55,7 +56,7 @@ def get_features(sensors, energy, history):
 
 if __name__ == "__main__":
     episode_count = 100
-    lr = 1e-5
+    lr = 0.3
     nin = 145
     nout = 1
     layers = [30]

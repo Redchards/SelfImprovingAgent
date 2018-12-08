@@ -22,7 +22,7 @@ class RandomStrategy(BaseStrategy):
         pass
 
 class QCONStrategy(BaseStrategy):
-    def __init__(self, update_rate=0.9, initial_temperature=60, temperature_bounds=(20, 60)):
+    def __init__(self, update_rate=0.9, initial_temperature=20, temperature_bounds=(20, 60)):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
@@ -36,7 +36,7 @@ class QCONStrategy(BaseStrategy):
         self.criterion = nn.LinLoss()
         self.last_forward_pass = None
 
-        self.speed = 1
+        self.speed = 60
         self.iter = 0
         self.can_update = False
 
@@ -48,6 +48,9 @@ class QCONStrategy(BaseStrategy):
             self.can_update = True
             utility_values = self.get_utilities(sensors_values, energy_level, history)
             print("utility : ", utility_values)
+            self.temperature *= 1.01
+            if self.temperature > self.temperature_bounds[1]:
+                self.temperature = self.temperature_bounds[1]
             print([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
             probs = np.array([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
             probs /= sum(probs)
@@ -68,6 +71,7 @@ class QCONStrategy(BaseStrategy):
                 return
 
             utility_values = self.get_utilities(sensors_values, energy_level, history)
+            print("utilities :", utility_values)
             target = current_reward + self.update_rate * max(utility_values)
             print("predicted reward : ", target)
             loss = self.criterion.forward(self.last_forward_pass, target, history[:3].index(1) if 1 in history[:3] else 0)

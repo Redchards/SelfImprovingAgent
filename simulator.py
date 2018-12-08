@@ -65,9 +65,15 @@ class MockSimulator(DefaultSimulator):
                             Sensor('obstacle', obstacle_sensor_map, obstacle_sensor_aoe)]
 
         self.reset()
+        self.iter = 0
+        self.piece_of_food_found = 0
 
     def step(self, player_command_idx, player_command, evt_queue):
         if not self.player_state.alive:
+            print("iter ", self.iter)
+            print("pieces of food ", self.piece_of_food_found)
+            self.piece_of_food_found = 0
+            self.iter += 1
             self.reset()
 
         reward = self.apply_enemy_logic()
@@ -113,6 +119,7 @@ class MockSimulator(DefaultSimulator):
 
         if not new_player_pos == old_player_pos:
             if self.map[new_player_pos[1]][new_player_pos[0]].type == 'food':
+                self.piece_of_food_found += 1
                 reward = 0.6
                 self.player_state.heal(15)
 
@@ -126,7 +133,11 @@ class MockSimulator(DefaultSimulator):
                 self.map[new_player_pos[1]][new_player_pos[0]] = self.map[old_player_pos[1]][old_player_pos[0]]
                 self.map[old_player_pos[1]][old_player_pos[0]] = entity.EmptyEntity()
                 self.player_state.position = new_player_pos
-                self.player_state.take_damage(1)
+
+            self.player_state.take_damage(1)
+
+        if self.player_controller.collided:
+            self.player_state.take_damage(1)
 
         for sensor in self.sensor_list:
             sensor.perception(new_player_pos, self.map)

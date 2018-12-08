@@ -52,6 +52,7 @@ class Renderer:
 
         m, s, e, h = self.simulator.get_state()
         while self.running:
+            print("iter : ", iter)
             evt_queue = pygame.event.get()
             self.handler.handle_events(evt_queue)
             player_command_idx, player_command = self.player_strategy.select_move(s, e, h)

@@ -33,9 +33,11 @@ class LinLoss(nn.Module):
         super(LinLoss, self).__init__()
 
     def forward(self, y_hat, y, action):
-        res = torch.zeros(4)
-        res[action] = y - y_hat[action]
-        return torch.sum(res)
+        print(action)
+        print(y)
+        print(y_hat[action])
+        print(y - y_hat[action])
+        return y - y_hat[action]
 
     '''def forward(self, y_hat, y, action):
         res = torch.zeros(4)
@@ -46,7 +48,7 @@ def get_features(sensors, energy, history):
     li = []
     for i in range(4):
         t = tuple(np.roll(x, i * (len(x) // 4)) for x in sensors)
-        print(t)
+        #print(t)
         #sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
         sen = np.hstack(t)
         sen = np.hstack((sen, np.array(energy), np.array(history)))
@@ -62,7 +64,7 @@ if __name__ == "__main__":
     layers = [30]
 
     model = NN(nin, nout, layers)
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=lr)
     criterion = nn.LinLoss()
 
 # for i in range(episode_count):

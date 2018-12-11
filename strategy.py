@@ -26,17 +26,17 @@ class QCONStrategy(BaseStrategy):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
-        self.lr = 1e-5
+        self.lr = 0.3
         self.nin = 145
         self.nout = 1
         self.layers = [30]
 
         self.utility_network = nn.NN(self.nin, self.nout, self.layers)
-        self.optimizer = optim.Adam(self.utility_network.parameters(), lr=self.lr)
+        self.optimizer = optim.SGD(self.utility_network.parameters(), lr=self.lr)
         self.criterion = nn.LinLoss()
         self.last_forward_pass = None
 
-        self.speed = 60
+        self.speed = 5
         self.iter = 0
         self.can_update = False
 

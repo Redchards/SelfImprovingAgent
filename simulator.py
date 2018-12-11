@@ -68,8 +68,11 @@ class MockSimulator(DefaultSimulator):
         self.iter = 0
         self.piece_of_food_found = 0
 
+        self.nb_pieces_food = len([(j, i) for i, _ in enumerate(self.map) for j, e in enumerate(self.map[i]) if e.type == 'food'])
+
+
     def step(self, player_command_idx, player_command, evt_queue):
-        if not self.player_state.alive:
+        if not self.player_state.alive or self.piece_of_food_found == self.nb_pieces_food:
             print("iter ", self.iter)
             print("pieces of food ", self.piece_of_food_found)
             self.piece_of_food_found = 0
@@ -145,7 +148,7 @@ class MockSimulator(DefaultSimulator):
         return reward
 
     def reset(self):
-        self.map = MapLoader().parse_map('resources/map/map1.csv')
+        self.map = MapLoader().parse_map('resources/map/map2.csv')
         self.dim = (len(self.map[0]), len(self.map))
         self.player_controller = PlayerController(self.map)
         self.player_state = PlayerState(speed=1, max_health=40, quantized_level_num=16,

@@ -88,6 +88,8 @@ class MockSimulator(DefaultSimulator):
 
         if not self.player_state.alive:
             reward = -0.9
+        elif self.player_controller.collided:
+            reward = -0.1
 
         return self.get_state() + (reward,)
 
@@ -148,7 +150,7 @@ class MockSimulator(DefaultSimulator):
         return reward
 
     def reset(self):
-        self.map = MapLoader().parse_map('resources/map/map2.csv')
+        self.map = MapLoader().parse_map('resources/map/map1.csv')
         self.dim = (len(self.map[0]), len(self.map))
         self.player_controller = PlayerController(self.map)
         self.player_state = PlayerState(speed=1, max_health=40, quantized_level_num=16,

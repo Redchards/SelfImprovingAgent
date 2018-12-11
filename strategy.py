@@ -33,7 +33,7 @@ class QCONStrategy(BaseStrategy):
 
         self.utility_networks = [nn.NN(self.nin, self.nout, self.layers) for _ in range(4)]
         self.optimizers = [optim.SGD(self.utility_networks[i].parameters(), lr=self.lr) for i in range(4)]
-        self.criterion = torch.nn.MSELoss()
+        self.criterion = nn.LinLoss()
         self.last_forward_pass = [None for _ in range(4)]
 
         self.speed = 5
@@ -48,7 +48,8 @@ class QCONStrategy(BaseStrategy):
             self.can_update = True
             utility_values = self.get_utilities(sensors_values, energy_level, history)
             print("utility : ", utility_values)
-            self.temperature *= 1.01
+            self.temperature *= 1.0001
+            print("temperature : ", self.temperature)
             if self.temperature > self.temperature_bounds[1]:
                 self.temperature = self.temperature_bounds[1]
             print([u.item() for u in torch.nn.Softmax(dim=0)(torch.Tensor(utility_values) * self.temperature)])

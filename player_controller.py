@@ -43,15 +43,19 @@ class PlayerController:
         pos_x, pos_y = self.player_position
 
         if self.player_position[0] < 0:
+            self.collided = True
             self.player_position = (0, pos_y)
 
         elif self.player_position[1] < 0:
+            self.collided = True
             self.player_position = (pos_x, 0)
 
         elif self.player_position[0] >= self.dim[0]:
+            self.collided = True
             self.player_position = (self.dim[0] - 1, pos_y)
 
         elif self.player_position[1] >= self.dim[1]:
+            self.collided = True
             self.player_position = (pos_x, self.dim[1] - 1)
 
         pos_x, pos_y = self.player_position

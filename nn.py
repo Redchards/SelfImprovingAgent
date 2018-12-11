@@ -32,12 +32,9 @@ class LinLoss(nn.Module):
     def __init__(self):
         super(LinLoss, self).__init__()
 
-    def forward(self, y_hat, y, action):
-        print(action)
+    def forward(self, y_hat, y):
         print(y)
-        print(y_hat[action])
-        print(y - y_hat[action])
-        return y - y_hat[action]
+        return y - y_hat
 
     '''def forward(self, y_hat, y, action):
         res = torch.zeros(4)

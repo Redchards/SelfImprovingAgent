@@ -93,14 +93,14 @@ class QCONStrategy(BaseStrategy):
         return [self.utility_networks[i].forward(val[i]) for i in range(4)]
 
 class QCONStrategy2(BaseStrategy):
-    def __init__(self, update_rate=0.9, initial_temperature=20, temperature_bounds=(20, 60)):
+    def __init__(self, update_rate=0.9, initial_temperature=10, temperature_bounds=(10, 60), epsilon=0.1, epsilon_decay=0.99):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
         self.lr = 0.0003
         self.nin = 145
         self.nout = 4
-        self.layers = [300]
+        self.layers = [500]
 
         self.utility_network = nn.NN(self.nin, self.nout, self.layers)
         self.optimizer = optim.Adam(self.utility_network.parameters(), lr=self.lr)
@@ -110,6 +110,9 @@ class QCONStrategy2(BaseStrategy):
         self.speed = 5
         self.iter = 0
         self.can_update = False
+
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
 
     def select_move(self, sensors_values, energy_level, history):
         self.iter += 1
@@ -126,8 +129,13 @@ class QCONStrategy2(BaseStrategy):
             print([u.item() for u in torch.nn.Softmax(dim=0)(torch.Tensor(utility_values) * self.temperature)])
             probs = np.array([u.item() for u in torch.nn.Softmax(dim=0)(torch.Tensor(utility_values) * self.temperature)])
             probs /= sum(probs)
-            idx = random.choice(len(self.moveset), p=probs)
-
+            eps_explore_draw = random.uniform(0, 1)
+            if eps_explore_draw < self.epsilon:
+                idx = random.randint(0, 4)
+            else:
+                idx = random.choice(len(self.moveset), p=probs)
+            self.epsilon *= self.epsilon_decay
+            
             self.last_forward_pass = utility_values
             print("idx : ", idx)
             return idx, self.moveset[idx]

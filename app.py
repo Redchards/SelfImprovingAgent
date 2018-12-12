@@ -11,5 +11,5 @@ from strategy import QCONStrategy
 from strategy import QCONStrategy2
 
 if __name__ == "__main__":
-    renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONStrategy2())
+    renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONStrategy2(update_rate=0.999))
     renderer.render()

@@ -59,7 +59,7 @@ class Renderer:
             self.player_strategy.update_strategy(s, e, h, r)
 
             self.draw_grid(m, self.cell_dim)
-            clock.tick(60)
+            clock.tick(600)
             pygame.display.flip()
 
         pygame.quit()

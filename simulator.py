@@ -69,14 +69,20 @@ class MockSimulator(DefaultSimulator):
         self.piece_of_food_found = 0
 
         self.nb_pieces_food = len([(j, i) for i, _ in enumerate(self.map) for j, e in enumerate(self.map[i]) if e.type == 'food'])
+        self.cummulated_rewards = []
+        self.pieces_of_food_found_history = []
+        self.current_cummulated = 0
 
 
     def step(self, player_command_idx, player_command, evt_queue):
         if not self.player_state.alive or self.piece_of_food_found == self.nb_pieces_food:
             print("iter ", self.iter)
             print("pieces of food ", self.piece_of_food_found)
+            self.pieces_of_food_found_history.append(self.piece_of_food_found)
             self.piece_of_food_found = 0
             self.iter += 1
+            self.cummulated_rewards.append(self.current_cummulated)
+            self.current_cummulated = 0
             self.reset()
 
         reward = self.apply_enemy_logic()
@@ -90,6 +96,8 @@ class MockSimulator(DefaultSimulator):
             reward = -0.9
         elif self.player_controller.collided:
             reward = -0.2
+
+        self.current_cummulated += reward
 
         return self.get_state() + (reward,)
 
@@ -150,10 +158,10 @@ class MockSimulator(DefaultSimulator):
         return reward
 
     def reset(self):
-        self.map = MapLoader().parse_map('resources/map/map2.csv')
+        self.map = MapLoader().parse_map('resources/map/map1.csv')
         self.dim = (len(self.map[0]), len(self.map))
         self.player_controller = PlayerController(self.map)
-        self.player_state = PlayerState(speed=5, max_health=40, quantized_level_num=16,
+        self.player_state = PlayerState(speed=50, max_health=40, quantized_level_num=16,
                                         position=self.player_controller.player_position)
 
         self.enemy_behaviour = EnemyBehaviour(self.map)

@@ -26,7 +26,7 @@ class QCONStrategy(BaseStrategy):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
-        self.lr = 0.0003
+        self.lr = 0.3
         self.nin = 145
         self.nout = 1
         self.layers = [30]
@@ -93,7 +93,7 @@ class QCONStrategy(BaseStrategy):
         return [self.utility_networks[i].forward(val[i]) for i in range(4)]
 
 class QCONStrategy2(BaseStrategy):
-    def __init__(self, update_rate=0.9, initial_temperature=10, temperature_bounds=(10, 60), epsilon=0.1, epsilon_decay=0.99):
+    def __init__(self, update_rate=0.9, initial_temperature=3, temperature_bounds=(3, 60), epsilon=0.1, epsilon_decay=0.99):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
@@ -107,7 +107,7 @@ class QCONStrategy2(BaseStrategy):
         self.criterion = torch.nn.SmoothL1Loss()
         self.last_forward_pass = None
 
-        self.speed = 5
+        self.speed = 50
         self.iter = 0
         self.can_update = False
 
@@ -152,7 +152,7 @@ class QCONStrategy2(BaseStrategy):
 
             utility_values = self.get_utilities(sensors_values, energy_level, history)
             print("utilities :", utility_values)
-            target = current_reward + self.update_rate * max(utility_values)
+            target = torch.autograd.Variable(current_reward + self.update_rate * max(utility_values), requires_grad=False)
             print(max(utility_values))
             print("predicted reward : ", target)
             last_action = history[:3].index(1) if 1 in history[:3] else 0

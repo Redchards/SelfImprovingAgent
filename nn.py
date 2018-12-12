@@ -24,7 +24,7 @@ class NN(nn.Module):
         for i in range(1, len(self.layers)):
             x = torch.nn.functional.leaky_relu(x)
             x = self.layers[i](x)
-            x = 2 / (1 + torch.exp(-x)) - 1
+            x = 1 / (1 + torch.exp(-x)) - 0.5
         return x
 
 

@@ -44,7 +44,7 @@ class LinLoss(nn.Module):
 def get_features(sensors, energy, history):
     li = []
     for i in range(4):
-        t = tuple(x for x in sensors)
+        t = tuple(np.roll(x, i * (len(x) // 4)) for x in sensors)
         #print(t)
         #sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
         sen = np.hstack(t)

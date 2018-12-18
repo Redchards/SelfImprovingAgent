@@ -93,7 +93,7 @@ class QCONStrategy(BaseStrategy):
         return [self.utility_networks[i].forward(val[i]) for i in range(4)]
 
 class QCONStrategy2(BaseStrategy):
-    def __init__(self, update_rate=0.9, initial_temperature=3, temperature_bounds=(3, 60), epsilon=0.1, epsilon_decay=0.99):
+    def __init__(self, update_rate=0.9, initial_temperature=0.01, temperature_bounds=(0.01, 60), epsilon=0.1, epsilon_decay=0.99):
         self.update_rate = update_rate
         self.temperature = initial_temperature
         self.temperature_bounds = temperature_bounds
@@ -169,3 +169,66 @@ class QCONStrategy2(BaseStrategy):
     def get_utilities(self, sensors_values, energy_level, history):
         val = nn.get_features(sensors_values, energy_level, history)
         return self.utility_network.forward(val[0])
+
+class QCONStrategy3(BaseStrategy):
+    def __init__(self, update_rate=0.9, initial_temperature=0.1, temperature_bounds=(0.1, 60)):
+        self.update_rate = update_rate
+        self.temperature = initial_temperature
+        self.temperature_bounds = temperature_bounds
+        self.lr = 0.3
+        self.nin = 145
+        self.nout = 1
+        self.layers = [30]
+
+        self.utility_network = nn.NN(self.nin, self.nout, self.layers)
+        self.optimizer = optim.SGD(self.utility_network.parameters(), lr=self.lr)
+        self.criterion = torch.nn.MSELoss()
+        self.last_forward_pass = None
+
+        self.speed = 50
+        self.iter = 0
+        self.can_update = False
+
+    def select_move(self, sensors_values, energy_level, history):
+        self.iter += 1
+
+        if 60/self.iter <= self.speed:
+            self.iter = 0
+            self.can_update = True
+            utility_values = self.get_utilities(sensors_values, energy_level, history)
+            print("utility : ", utility_values)
+            self.temperature *= 1.01
+            print("temperature : ", self.temperature)
+            if self.temperature > self.temperature_bounds[1]:
+                self.temperature = self.temperature_bounds[1]
+            print([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
+            probs = np.array([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
+            probs /= sum(probs)
+            idx = random.choice(len(self.moveset), p=probs)
+
+            self.last_forward_pass = utility_values[idx]
+            print("idx : ", idx)
+            return idx, self.moveset[idx]
+        return -1, (0, 0)
+
+    def update_strategy(self, sensors_values, energy_level, history, current_reward):
+        if self.can_update:
+            print("reward : ", current_reward)
+            self.can_update = False
+            self.optimizer.zero_grad()
+
+            if self.last_forward_pass is None:
+                return
+
+            utility_values = self.get_utilities(sensors_values, energy_level, history)
+            print("utilities :", utility_values)
+            target = current_reward + self.update_rate * max(utility_values)
+            print("predicted reward : ", target)
+            loss = self.criterion.forward(self.last_forward_pass, target)
+            print("loss : ", loss)
+            print(loss.grad)
+            loss.backward()
+            self.optimizer.step()
+
+    def get_utilities(self, sensors_values, energy_level, history):
+        return self.utility_network.forward(nn.get_features(sensors_values, energy_level, history))

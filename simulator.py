@@ -27,46 +27,71 @@ class MockSimulator(DefaultSimulator):
     def __init__(self):
         img = pygame.image.load("resources/image/star.png")
         # self.mockentity = entity.PlayerAgent(42)
+        layer1_pred = lambda x, y: abs(x) + abs(y) <= 2
+        layer2_pred = lambda x, y: ((x % 2, y % 2) == (0, 0) and abs(x) + abs(y) in range(4, 7, 2))
+        layer3_pred = lambda x, y: ((x % 2, y % 2) == (0, 0) and abs(x) + abs(y) == 10)
+        rotate_part = lambda l: [(y, -x) for x, y in l]
+
+        food_sensor_l1 = [(x, y) for x in range(0, 11) for y in reversed(range(0, 11)) \
+                           if (layer1_pred(x, y) or layer2_pred(x, y) or layer3_pred(x, y)) and not y == 0]
+        food_sensor_l2 = rotate_part(food_sensor_l1)
+        food_sensor_l3 = rotate_part(food_sensor_l2)
+        food_sensor_l4 = rotate_part(food_sensor_l3)
+
+        food_sensor_list = food_sensor_l1 + food_sensor_l2 + food_sensor_l3 + food_sensor_l4
         food_sensor_map = {
-            'O': [(-4, 0), (-6, 0), (4, 0), (6, 0), (-2, -2), (-4, -2), (2, -2), (4, -2), (0, -4), (-2, -4), (2, -4),
-                  (0, -6), (-2, 2), (-4, 2), (2, 2), (4, 2), (0, 4), (-2, 4), (2, 4), (0, 6)],
-            'X': [(-1, 0), (-2, 0), (1, 0), (2, 0), (-1, -1), (0, -1), (1, -1), (0, -2), (-1, 1), (0, 1), (1, 1),
-                  (0, 2)]}
-
-        food_sensor_aoe = {
-            'X': [(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)],
-            'O': [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1), (-1, 1), (1, 1), (-1, -1), (0, 0)]}
-
-        enemy_sensor_map = {
-            'Y': [(-10, 0), (10, 0), (-8, -2), (8, -2), (-6, -4), (6, -4), (-4, -6), (4, -6), (-2, -8), (2, -8),
-                  (0, -10),
-                  (-8, 2), (8, 2), (-6, 4), (6, 4), (-4, 6), (4, 6), (-2, 8), (2, 8), (0, 10)],
-            'O': [(-4, 0), (-6, 0), (4, 0), (6, 0), (-2, -2), (-4, -2), (2, -2), (4, -2), (0, -4), (-2, -4), (2, -4),
-                  (0, -6), (-2, 2), (-4, 2), (2, 2), (4, 2), (0, 4), (-2, 4), (2, 4), (0, 6)],
-            'X': [(-1, 0), (-2, 0), (1, 0), (2, 0), (-1, -1), (0, -1), (1, -1), (0, -2), (-1, 1), (0, 1), (1, 1),
-                  (0, 2)]
+            'Y': [i for i, s in enumerate(food_sensor_list) if layer3_pred(s[0], s[1])],
+            'X': [i for i, s in enumerate(food_sensor_list) if layer2_pred(s[0], s[1])],
+            'O': [i for i, s in enumerate(food_sensor_list) if layer1_pred(s[0], s[1])]
         }
-        enemy_sensor_aoe = {
+        food_sensor_aoe = {
             'Y': [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1), (-1, 1), (1, 1), (-1, -1), (0, 0), (2, 0), (0, 2), (-2, 0),
                   (0, -2)],
             'X': [(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)],
             'O': [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1), (-1, 1), (1, 1), (-1, -1), (0, 0)]}
 
+        enemy_sensor_l1 = [(x, y) for x in range(0, 7) for y in reversed(range(0, 7)) \
+                           if (layer1_pred(x, y) or layer2_pred(x, y)) and not y == 0]
+        enemy_sensor_l2 = rotate_part(enemy_sensor_l1)
+        enemy_sensor_l3 = rotate_part(enemy_sensor_l2)
+        enemy_sensor_l4 = rotate_part(enemy_sensor_l3)
+
+        enemy_sensor_list = enemy_sensor_l1 + enemy_sensor_l2 + enemy_sensor_l3 + enemy_sensor_l4
+        print(len(food_sensor_list))
+
+        enemy_sensor_map = {
+            'O': [i for i, s in enumerate(enemy_sensor_list) if layer1_pred(s[0], s[1])],
+            'X': [i for i, s in enumerate(enemy_sensor_list) if layer2_pred(s[0], s[1])]
+        }
+
+        enemy_sensor_aoe = {
+            'X': [(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)],
+            'O': [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1), (-1, 1), (1, 1), (-1, -1), (0, 0)]}
+
+        obstacle_sensor_l1 = [(x, y) for x in range(0, 5) for y in reversed(range(0, 11)) \
+                                if (x + y <= 4) and not y == 0]
+
+        obstacle_sensor_l2 = rotate_part(obstacle_sensor_l1)
+        obstacle_sensor_l3 = rotate_part(obstacle_sensor_l2)
+        obstacle_sensor_l4 = rotate_part(obstacle_sensor_l3)
+
+        obstacle_sensor_list = obstacle_sensor_l1 + obstacle_sensor_l2 + obstacle_sensor_l3 + obstacle_sensor_l4
+        print(len(obstacle_sensor_list))
         obstacle_sensor_map = {
-            'O': [(i, j) for i in range(-4, 5) for j in range(-4, 5) if abs(i) + abs(j) <= 4 and not (i, j) == (0, 0)]
+            'O': list(range(len(obstacle_sensor_list)))
         }
 
         obstacle_sensor_aoe = {
             'O': [(0, 0)]
         }
 
-        self.sensor_list = [Sensor('food', food_sensor_map, food_sensor_aoe), \
-                            Sensor('enemy', enemy_sensor_map, enemy_sensor_aoe), \
-                            Sensor('obstacle', obstacle_sensor_map, obstacle_sensor_aoe)]
+        self.sensor_list = [Sensor('food', food_sensor_list, food_sensor_map, food_sensor_aoe), \
+                            Sensor('enemy', enemy_sensor_list, enemy_sensor_map, enemy_sensor_aoe), \
+                            Sensor('obstacle', obstacle_sensor_list, obstacle_sensor_map, obstacle_sensor_aoe)]
 
-        self.reset()
         self.iter = 0
         self.piece_of_food_found = 0
+        self.reset()
 
         self.nb_pieces_food = len([(j, i) for i, _ in enumerate(self.map) for j, e in enumerate(self.map[i]) if e.type == 'food'])
         self.cummulated_rewards = []

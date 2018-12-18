@@ -98,15 +98,14 @@ class Renderer:
         for i, sensor in enumerate(self.simulator.sensor_list):
             if self.draw_sensors[i]:
                 idx = 0
-                for _, l in sensor.sensor_map.items():
-                    for cell in l:
-                        cell_x, cell_y =  player_pos_x + cell[0], player_pos_y + cell[1]
-                        if sensor.current_perception[idx]:
-                            pygame.draw.rect(self.screen, (255, 0, 0, 0.5), (cell_width * cell_x + cell_width // 2  - 5, cell_height * cell_y + cell_height // 2 - 5, 5, 5))
-                        else:
-                            pygame.draw.rect(self.screen, (0, 0, 0, 0.5), (cell_width * cell_x + cell_width // 2  - 5, cell_height * cell_y + cell_height // 2 - 5, 5, 5))
+                for cell in sensor.sensor_list:
+                    cell_x, cell_y =  player_pos_x + cell[0], player_pos_y + cell[1]
+                    if sensor.current_perception[idx]:
+                        pygame.draw.rect(self.screen, (255, 0, 0, 0.5), (cell_width * cell_x + cell_width // 2  - 5, cell_height * cell_y + cell_height // 2 - 5, 5, 5))
+                    else:
+                        pygame.draw.rect(self.screen, (0, 0, 0, 0.5), (cell_width * cell_x + cell_width // 2  - 5, cell_height * cell_y + cell_height // 2 - 5, 5, 5))
 
-                        idx += 1
+                    idx += 1
 
         for health_level in range(self.simulator.player_state.current_health_level):
             pygame.draw.rect(self.screen, (0, 128, 0, 1), (cell_width // 5 * (health_level + 1), cell_height * nb_row - (cell_height // 3), cell_height // 20, cell_height // 4))

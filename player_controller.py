@@ -16,7 +16,7 @@ class PlayerController:
         }
 
         event_handlers = {
-            pygame.KEYDOWN: lambda evt: self.set_manual_control(not self.manual_control) if evt.key in self.keymap['manual_control'] else self.move((0, 0), evt)
+            pygame.KEYDOWN: lambda evt: self.set_manual_control(not self.manual_control) if evt.key in self.keymap['manual_control'] else self.handle_manual_command(evt)
         }
 
         self.handler = EventHandler(event_handlers)
@@ -39,7 +39,8 @@ class PlayerController:
             move = player_command
             self.player_position = (old_x + move[0], old_y + move[1])
         else:
-            self.handle_manual_command(self, evt)
+            return self.player_position
+
         pos_x, pos_y = self.player_position
 
         if self.player_position[0] < 0:
@@ -68,6 +69,7 @@ class PlayerController:
     def handle_manual_command(self, evt):
         old_x, old_y = self.player_position
 
+        print(evt)
         if evt.key == pygame.K_UP:
             self.player_position = (old_x, old_y - 1)
         elif evt.key == pygame.K_DOWN:

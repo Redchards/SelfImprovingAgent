@@ -28,28 +28,42 @@ class NN(nn.Module):
         return x
 
 
+class NillLoss(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, inp):
+        ctx.save_for_backward(inp)
+        return inp
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.saved_tensors
+        inp = grad_output.clone()
+        return inp
+
+
 class LinLoss(nn.Module):
     def __init__(self):
         super(LinLoss, self).__init__()
 
     def forward(self, y_hat, y):
-        print(y)
-        return y - y_hat
+        return NillLoss.apply(y_hat - y)
 
     '''def forward(self, y_hat, y, action):
         res = torch.zeros(4)
         res[action] = y - y_hat[action]
         return res'''
 
+
 def get_features(sensors, energy, history):
     li = []
     for i in range(4):
         t = tuple(np.roll(x, i * (len(x) // 4)) for x in sensors)
-        #print(t)
-        #sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
+        # print(t)
+        # sen = np.hstack(tuple(np.roll(x, i * (len(x) // 4)) for x in sensors))
         sen = np.hstack(t)
         sen = np.hstack((sen, np.array(energy), np.array(history)))
         li.append(sen)
+
     return torch.from_numpy(np.array(li)).type(torch.FloatTensor)
 
 

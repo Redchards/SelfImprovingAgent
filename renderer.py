@@ -56,7 +56,7 @@ class Renderer:
             self.handler.handle_events(evt_queue)
             player_command_idx, player_command = self.player_strategy.select_move(s, e, h)
             m, s, e, h, r = self.simulator.step(player_command_idx, player_command, evt_queue)
-            self.player_strategy.update_strategy(s, e, h, r)
+            self.player_strategy.update_strategy(s, e, h, r, player_command_idx)
 
             self.draw_grid(m, self.cell_dim)
             clock.tick(600)

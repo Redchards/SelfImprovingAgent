@@ -62,7 +62,7 @@ class QCONStrategy(BaseStrategy):
             return idx, self.moveset[idx]
         return -1, (0, 0)
 
-    def update_strategy(self, sensors_values, energy_level, history, current_reward):
+    def update_strategy(self, sensors_values, energy_level, history, current_reward, action):
         if self.can_update:
             print("reward : ", current_reward)
             self.can_update = False
@@ -141,7 +141,7 @@ class QCONStrategy2(BaseStrategy):
             return idx, self.moveset[idx]
         return -1, (0, 0)
 
-    def update_strategy(self, sensors_values, energy_level, history, current_reward):
+    def update_strategy(self, sensors_values, energy_level, history, current_reward, action):
         if self.can_update:
             print("reward : ", current_reward)
             self.can_update = False
@@ -211,7 +211,7 @@ class QCONStrategy3(BaseStrategy):
             return idx, self.moveset[idx]
         return -1, (0, 0)
 
-    def update_strategy(self, sensors_values, energy_level, history, current_reward):
+    def update_strategy(self, sensors_values, energy_level, history, current_reward, action):
         if self.can_update:
             print("reward : ", current_reward)
             self.can_update = False
@@ -232,3 +232,113 @@ class QCONStrategy3(BaseStrategy):
 
     def get_utilities(self, sensors_values, energy_level, history):
         return self.utility_network.forward(nn.get_features(sensors_values, energy_level, history))
+
+
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
+class ReplayMemory(object):
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []
+        self.position = 0
+
+    def push(self,*arg): # transition: ('state', 'action', 'next_state', 'reward','done')
+        """Saves a transition."""
+        if len(self.memory) < self.capacity:
+            self.memory.append(None)
+        self.memory[self.position] = Transition(*arg)
+        self.position = (self.position + 1) % self.capacity
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)
+    
+class QCONRStrategy(BaseStrategy):
+    def __init__(self, update_rate=0.9, initial_temperature=0.1, temperature_bounds=(0.1, 60)):
+        self.update_rate = update_rate
+        self.temperature = initial_temperature
+        self.temperature_bounds = temperature_bounds
+        self.lr = 0.3
+        self.nin = 145
+        self.nout = 4 # 4 actions
+        self.layers = [30]
+        self.capacity = 1000000 # memory capacity
+        self.batch_size = 1000
+        self.C_target = 300  # update target nn every C times
+        self.state_prec = 0 # precedent state
+        self.count = 0 # count for updating the target nn
+
+        self.utility_network = nn.NN(self.nin, self.nout, self.layers)
+        self.utility_network_target = copy.deepcopy(self.utility_network)
+        self.optimizer = optim.SGD(self.utility_network.parameters(), lr=self.lr)
+        self.criterion = torch.nn.SmoothL1Loss() #nn.MSELoss() 
+        self.last_forward_pass = None
+
+        self.speed = 50
+        self.iter = 0
+        self.can_update = False
+
+    def select_move(self, sensors_values, energy_level, history):
+        self.iter += 1
+
+        if 60/self.iter <= self.speed:
+            self.iter = 0
+            self.can_update = True
+            utility_values = self.get_utilities(sensors_values, energy_level, history)
+            print("utility : ", utility_values)
+            self.temperature *= 1.01
+            print("temperature : ", self.temperature)
+            if self.temperature > self.temperature_bounds[1]:
+                self.temperature = self.temperature_bounds[1]
+            print([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
+            probs = np.array([u.item() for u in torch.nn.Softmax(dim=0)(utility_values * self.temperature)])
+            probs /= sum(probs)
+            idx = random.choice(len(self.moveset), p=probs)
+
+            self.last_forward_pass = utility_values[idx]
+            print("idx : ", idx)
+            
+            self.state_prec = torch.tensor(nn.get_features(sensors_values, energy_level, history),dtype = torch.float)
+            return idx, self.moveset[idx]
+        return -1, (0, 0)
+
+    def update_strategy(self, sensors_values, energy_level, history, current_reward, action):
+        if self.can_update:
+            state = torch.tensor(nn.get_features(sensors_values, energy_level, history),dtype = torch.float)
+            action = torch.tensor([action])
+            reward = torch.tensor([current_reward],dtype = torch.float)
+            self.D.push(self.state_prec, action, state, reward)
+            if len(self.D) < self.batch_size:
+                return
+            mini_batch = self.D.sample(self.batch_size)
+            batch = Transition(*zip(*mini_batch))
+            state_batch = torch.cat(batch.state)
+            action_batch = torch.cat(batch.action)
+            next_state_batch = torch.cat(batch.next_state)
+            reward_batch = torch.cat(batch.reward)
+            
+            print("reward : ", current_reward)
+            self.can_update = False
+            
+            self.optimizer.zero_grad()
+            if self.last_forward_pass is None:
+                return
+            
+            ytarget = reward_batch + self.update_rate * self.utility_network_target(next_state_batch).max(dim=1)[0]
+            ypred = self.utility_network(state_batch)[list(range(self.batch_size)),action_batch]
+            batch_loss = self.criterion(ypred, ytarget.detach())
+            self.optimizer.zero_grad()
+            batch_loss.backward()
+            print("loss : ", batch_loss)
+            self.optimizer.step()
+
+            self.count += 1
+            if self.count % self.C_target == 0:
+                self.count = 0
+                self.utility_network_target = copy.deepcopy(self.utility_network)
+
+    def get_utilities(self, sensors_values, energy_level, history):
+        return self.utility_network.forward(nn.get_features(sensors_values, energy_level, history)).detach()
+

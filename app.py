@@ -11,13 +11,13 @@ from simulator import MockSimulator
 from strategy import QCONStrategy
 from strategy import QCONStrategy2
 from strategy import QCONStrategy3
-from strategy import QCONRStrategy
+from strategy import QCONRStrategy2
 import matplotlib as mpl
 mpl.use('module://backend_interagg')
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONRStrategy())
+    renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONRStrategy2())
     renderer.render()
     plt.ticklabel_format(style='plain', axis='x', useOffset=False)
     plt.plot(range(len(renderer.simulator.cummulated_rewards)), renderer.simulator.cummulated_rewards)

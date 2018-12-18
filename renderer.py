@@ -58,6 +58,9 @@ class Renderer:
             m, s, e, h, r = self.simulator.step(player_command_idx, player_command, evt_queue)
             self.player_strategy.update_strategy(s, e, h, r, player_command_idx)
 
+            if not self.simulator.player_state.alive:
+                self.player_strategy.reset_agent()
+
             self.draw_grid(m, self.cell_dim)
             clock.tick(600)
             pygame.display.flip()

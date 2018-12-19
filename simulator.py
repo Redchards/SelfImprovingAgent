@@ -13,6 +13,7 @@ from player_controller import PlayerController
 from sensor import Sensor
 from player_state import PlayerState
 from enemy_behaviour import EnemyBehaviour
+import copy
 
 
 class DefaultSimulator:
@@ -91,11 +92,15 @@ class MockSimulator(DefaultSimulator):
 
         self.iter = 0
         self.piece_of_food_found = 0
+        self.training_iter = 0
+        self.training_phase = True
+        self.testing_maps = [MapLoader().parse_map('resources/map/map1.csv') for _ in range(50)]
         self.reset()
 
         self.nb_pieces_food = len([(j, i) for i, _ in enumerate(self.map) for j, e in enumerate(self.map[i]) if e.type == 'food'])
         self.cummulated_rewards = []
         self.pieces_of_food_found_history = []
+        self.death_context_history = []
         self.current_cummulated = 0
 
 
@@ -103,12 +108,16 @@ class MockSimulator(DefaultSimulator):
         if not self.player_state.alive or self.piece_of_food_found == self.nb_pieces_food:
             print("iter ", self.iter)
             print("pieces of food ", self.piece_of_food_found)
-            self.pieces_of_food_found_history.append(self.piece_of_food_found)
+
+            if not self.training_phase:
+                self.pieces_of_food_found_history.append(self.piece_of_food_found)
+                self.cummulated_rewards.append(self.current_cummulated)
+
             self.piece_of_food_found = 0
             self.iter += 1
-            self.cummulated_rewards.append(self.current_cummulated)
             self.current_cummulated = 0
             self.reset()
+            self.training_iter += 1
 
         reward = self.apply_enemy_logic()
 
@@ -154,6 +163,7 @@ class MockSimulator(DefaultSimulator):
         self.player_controller.step(player_command, evt_queue)
 
         new_player_pos = self.player_controller.player_position
+        marked = False
 
         if not new_player_pos == old_player_pos:
             if self.map[new_player_pos[1]][new_player_pos[0]].type == 'food':
@@ -162,7 +172,11 @@ class MockSimulator(DefaultSimulator):
                 self.player_state.heal(15)
 
             if self.map[new_player_pos[1]][new_player_pos[0]].type == 'enemy':
-                self.player_state.take_damage(self.player_state.current_health)
+                self.death_context_history.append('enemy')
+
+                if not self.training_phase:
+                    marked = True
+                    self.player_state.take_damage(self.player_state.current_health)
                 reward = -0.9
                 self.player_state.alive = False
                 self.map[old_player_pos[1]][
@@ -177,13 +191,31 @@ class MockSimulator(DefaultSimulator):
         if self.player_controller.collided:
             self.player_state.take_damage(1)
 
+        if self.player_state.current_health == 0 and not marked and not self.training_phase:
+            self.death_context_history.append('food')
+
         for sensor in self.sensor_list:
             sensor.perception(new_player_pos, self.map)
 
         return reward
 
     def reset(self):
-        self.map = MapLoader().parse_map('resources/map/map1.csv')
+        if self.training_iter >= 20 and self.training_phase:
+            self.training_iter = 0
+            self.training_phase = False
+        elif self.training_iter >= 50 and not self.training_phase:
+            self.training_iter = 0
+            self.training_phase = True
+
+        if self.training_phase:
+            self.map = MapLoader().parse_map('resources/map/map1.csv')
+        elif not self.training_phase:
+            print(len(self.testing_maps))
+            print(self.training_iter)
+            self.map = [list(x) for x in self.testing_maps[self.training_iter]]
+
+
+
         self.dim = (len(self.map[0]), len(self.map))
         self.player_controller = PlayerController(self.map)
         self.player_state = PlayerState(speed=50, max_health=40, quantized_level_num=16,

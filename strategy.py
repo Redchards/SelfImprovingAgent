@@ -394,7 +394,7 @@ class QCONRStrategy2(BaseStrategy):
             self.can_update = True
             utility_values = self.get_utilities(sensors_values, energy_level, history)
             print("utility : ", utility_values)
-            self.temperature *= 1.001
+            self.temperature *= 1.01
             print("temperature : ", self.temperature)
             if self.temperature > self.temperature_bounds[1]:
                 self.temperature = self.temperature_bounds[1]

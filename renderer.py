@@ -15,7 +15,7 @@ import entity
 import strategy
 
 class Renderer:
-    def __init__(self, window_dimensions=(480, 480), window_name="Default Renderer", simulator=DefaultSimulator(), player_strategy=strategy.QCONStrategy(), cell_margin=1):
+    def __init__(self, window_dimensions=(480, 480), window_name="Default Renderer", simulator=DefaultSimulator(), player_strategy=strategy.QCONStrategy(), max_steps=None, cell_margin=1):
         self.cell_margin = cell_margin
         self.window_dimensions = window_dimensions
         self.window_name = window_name
@@ -28,6 +28,7 @@ class Renderer:
         self.cell_dim = self.compute_cell_dimensions()
         self.draw_sensors = [False for _ in self.simulator.sensor_list]
         self.default_empty = entity.EmptyEntity()
+        self.max_steps = max_steps
 
         keypress_handlers = {
             pygame.K_F1: lambda: self.set_render_sensors(not self.draw_sensors[0], 0),
@@ -56,7 +57,9 @@ class Renderer:
             self.handler.handle_events(evt_queue)
             player_command_idx, player_command = self.player_strategy.select_move(s, e, h)
             m, s, e, h, r = self.simulator.step(player_command_idx, player_command, evt_queue)
-            self.player_strategy.update_strategy(s, e, h, r, player_command_idx)
+
+            if self.simulator.training_phase:
+                self.player_strategy.update_strategy(s, e, h, r, player_command_idx)
 
             if not self.simulator.player_state.alive:
                 self.player_strategy.reset_agent()
@@ -64,6 +67,9 @@ class Renderer:
             self.draw_grid(m, self.cell_dim)
             clock.tick(600)
             pygame.display.flip()
+
+            if not self.max_steps is None and self.simulator.iter >= self.max_steps:
+                self.stop()
 
         pygame.quit()
         

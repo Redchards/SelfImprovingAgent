@@ -17,10 +17,23 @@ mpl.use('module://backend_interagg')
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONRStrategy2())
-    renderer.render()
-    plt.ticklabel_format(style='plain', axis='x', useOffset=False)
-    plt.plot(range(len(renderer.simulator.cummulated_rewards)), renderer.simulator.cummulated_rewards)
-    print(renderer.simulator.pieces_of_food_found_history)
-    plt.plot(range(len(renderer.simulator.pieces_of_food_found_history)), renderer.simulator.pieces_of_food_found_history)
-    plt.show()
+
+    for i in range(10):
+        print("Iteration ", i)
+        renderer = Renderer(simulator=MockSimulator(), player_strategy=QCONRStrategy2(), max_steps=1050)
+        renderer.render()
+        plt.ticklabel_format(style='plain', axis='x', useOffset=False)
+        plt.plot(range(len(renderer.simulator.cummulated_rewards)), renderer.simulator.cummulated_rewards)
+        print(renderer.simulator.pieces_of_food_found_history)
+        plt.plot(range(len(renderer.simulator.pieces_of_food_found_history)), renderer.simulator.pieces_of_food_found_history)
+        plt.show()
+
+        with open("run_log_{}.out".format(i), 'w+') as f:
+            f.write("STEP : {}\n".format(i))
+            f.write("PIECES OF FOOD\n")
+            f.write(str(renderer.simulator.pieces_of_food_found_history))
+            f.write("\nCUMMULATED REWARDS\n")
+            f.write(str(renderer.simulator.cummulated_rewards))
+            f.write("\nDEATH CONTEXT\n")
+            f.write(str(renderer.simulator.death_context_history))
+            f.write("\n")
